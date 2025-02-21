@@ -111,26 +111,35 @@ exports.deleteProduct = async (req, res) => {
 };
 
 // Get all products (public)
+// Get all products (public)
 exports.getAllProducts = async (req, res) => {
     try {
+        console.log("Query parameters:", req.query); // Добавьте эту строку
+
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const sortBy = req.query.sortBy;
-        const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1; // 1 for ascending, -1 for descending
+        const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+        const category = req.query.category;
 
         const skip = (page - 1) * limit;
+
+        let filter = {};
+        if (category) {
+            filter.category = category;
+        }
 
         let sort = {};
         if (sortBy) {
             sort[sortBy] = sortOrder;
         }
 
-        const products = await Product.find()
+        const products = await Product.find(filter)
             .sort(sort)
             .skip(skip)
             .limit(limit);
 
-        const totalProducts = await Product.countDocuments();
+        const totalProducts = await Product.countDocuments(filter);
         const totalPages = Math.ceil(totalProducts / limit);
 
         res.status(200).json({
@@ -145,7 +154,6 @@ exports.getAllProducts = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
-
 // Get a specific product by ID (public)
 exports.getProductById = async (req, res) => {
     try {
