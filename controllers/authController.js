@@ -45,7 +45,16 @@ exports.register = async (req, res, next) => {
         // Generate token
         const token = generateToken(user);
 
-        res.status(201).json({ message: 'User registered successfully', token });
+        res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch (error) {
         next(error); // Pass error to the error handling middleware
     }
@@ -74,7 +83,16 @@ exports.login = async (req, res, next) => {
         // Generate token
         const token = generateToken(user);
 
-        res.status(200).json({ message: 'Logged in successfully', token });
+        res.status(200).json({
+            message: 'Logged in successfully',
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch (error) {
         next(error); // Pass error to the error handling middleware
     }
