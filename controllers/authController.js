@@ -44,6 +44,7 @@ exports.register = async (req, res, next) => {
 
         // Generate token
         const token = generateToken(user);
+        console.log('Generated token:', token);
 
         res.status(201).json({
             message: 'User registered successfully',
