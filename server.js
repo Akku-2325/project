@@ -15,8 +15,12 @@ const port = process.env.PORT || 3000;
 
 console.log("MONGODB_URI:", process.env.MONGODB_URI); // Добавляем эту строку
 
-// Enable CORS for all routes
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:3000', // Разрешить запросы только с этого домена (локальный фронтенд)
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
