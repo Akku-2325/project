@@ -17,10 +17,17 @@ console.log("MONGODB_URI:", process.env.MONGODB_URI); // Добавляем эт
 
 // CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:3000', // Разрешить запросы только с этого домена (локальный фронтенд)
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-app.use(cors(corsOptions));
+    origin: function (origin, callback) {
+      console.log("Origin:", origin); // Add this line to log the origin
+      if (origin === 'http://localhost:3000' || !origin) { // !origin allows requests with no origin (like from Postman)
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+    optionsSuccessStatus: 200
+  }
+  app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
