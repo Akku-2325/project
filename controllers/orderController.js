@@ -155,9 +155,9 @@ exports.checkout = async (req, res) => {
         const { shippingAddress, paymentMethod } = req.body;
 
         // Validate shipping address and payment method
-        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
+        if (!shippingAddress || !shippingAddress.street || !shippingAddress.street.length < 3 || !shippingAddress.city || !shippingAddress.city.length < 3) {
             await session.abortTransaction();
-            return res.status(400).json({ message: 'Shipping address is required' });
+            return res.status(400).json({ message: 'Shipping street and city are required' });
         }
 
         if (!paymentMethod) {
@@ -173,8 +173,22 @@ exports.checkout = async (req, res) => {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
-        // Validate cart items and calculate total amount
-        let totalAmount = 0;
+        // Create new order in the 'orders' collection
+        const order = new Order({
+            user: userId,
+            items: cart.items,
+            totalAmount: cart.totalAmount,
+            status: 'processing',
+            shippingAddress: {
+              street: shippingAddress.street,
+              city: shippingAddress.city
+            },
+            paymentMethod: paymentMethod,
+        });
+
+        await order.save({ session });
+
+        // Update stock quantity
         for (const item of cart.items) {
             const product = await Product.findById(item.product._id).session(session);
             if (!product) {
@@ -189,21 +203,7 @@ exports.checkout = async (req, res) => {
 
             product.stockQuantity -= item.quantity;
             await product.save({ session });
-
-            totalAmount += item.quantity * product.price;
         }
-
-        // Create new order in the 'orders' collection
-        const order = new Order({
-            user: userId,
-            items: cart.items,
-            totalAmount: totalAmount, // Используем вычисленную сумму
-            status: 'processing',
-            shippingAddress: shippingAddress,
-            paymentMethod: paymentMethod,
-        });
-
-        await order.save({ session });
 
         // Remove the cart from the 'carts' collection
         await Cart.deleteOne({ user: userId }).session(session);
