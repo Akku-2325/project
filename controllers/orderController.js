@@ -206,8 +206,10 @@ exports.checkout = async (req, res) => {
             await product.save({ session });
         }
 
-        // Remove the cart from the 'carts' collection
-        await Cart.deleteOne({ user: userId }).session(session);
+        if (cart) {
+            // Remove the cart from the 'carts' collection
+            await Cart.deleteOne({ user: userId }).session(session);
+      }
 
         await session.commitTransaction();
 
