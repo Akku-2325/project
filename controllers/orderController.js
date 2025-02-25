@@ -155,24 +155,24 @@ exports.checkout = async (req, res) => {
         const { shippingAddress, paymentMethod } = req.body;
         console.log("req.body:", req.body);
 
-        // Validate shipping address and payment method
-        if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Shipping street and city are required' });
-        }
+        // // Validate shipping address and payment method
+        // if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
+        //     await session.abortTransaction();
+        //     return res.status(400).json({ message: 'Shipping street and city are required' });
+        // }
 
-        if (!paymentMethod) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Payment method is required' });
-        }
+        // if (!paymentMethod) {
+        //     await session.abortTransaction();
+        //     return res.status(400).json({ message: 'Payment method is required' });
+        // }
 
-        // Find the cart in the 'carts' collection
-        const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
+        // // Find the cart in the 'carts' collection
+        // const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
 
-        if (!cart) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Cart is empty' });
-        }
+        // if (!cart) {
+        //     await session.abortTransaction();
+        //     return res.status(400).json({ message: 'Cart is empty' });
+        // }
 
         // Create new order in the 'orders' collection
         const order = new Order({
