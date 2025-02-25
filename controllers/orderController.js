@@ -1,4 +1,6 @@
+// controllers/orderController.js
 const Order = require('../models/Order');
+const Product = require('../models/Product'); // Import Product model
 
 // Get user's cart (pending order)
 exports.getCart = async (req, res) => {
@@ -147,10 +149,25 @@ exports.clearCart = async (req, res) => {
 exports.checkout = async (req, res) => {
     try {
         const userId = req.user.id;
-        const cart = await Order.findOne({ user: userId, status: 'pending' });
+        const cart = await Order.findOne({ user: userId, status: 'pending' }).populate('items.product'); // Populate product details
 
         if (!cart) {
             return res.status(400).json({ message: 'Cart is empty' });
+        }
+
+        // Обновляем количество товаров на складе
+        for (const item of cart.items) {
+            const product = await Product.findById(item.product._id);
+            if (!product) {
+                return res.status(404).json({ message: `Product not found: ${item.product}` });
+            }
+
+            if (product.stockQuantity < item.quantity) {
+                return res.status(400).json({ message: `Not enough stock for product: ${product.name}` });
+            }
+
+            product.stockQuantity -= item.quantity;
+            await product.save();
         }
 
         cart.status = 'processing'; // Or any other relevant status
