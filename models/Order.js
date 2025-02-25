@@ -32,6 +32,19 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
         default: 'pending',
     },
-}, { versionKey: false }); // Отключаем версионирование
+    shippingAddress: { // Add shipping address
+        type: {
+            street: String,
+            city: String,
+            state: String,
+            zip: String,
+        },
+        required: false, // Или true, в зависимости от требований
+    },
+    paymentMethod: { // Add payment method
+        type: String,
+        required: false, // Или true, в зависимости от требований
+    },
+}, { versionKey: false });
 
 module.exports = mongoose.model('Order', orderSchema);
