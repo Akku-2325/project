@@ -153,6 +153,7 @@ exports.checkout = async (req, res) => {
     try {
         const userId = req.user.id;
         const { shippingAddress, paymentMethod } = req.body;
+        console.log("req.body:", req.body);
 
         // Validate shipping address and payment method
         if (!shippingAddress || !shippingAddress.street || !shippingAddress.street.length < 3 || !shippingAddress.city || !shippingAddress.city.length < 3) {
