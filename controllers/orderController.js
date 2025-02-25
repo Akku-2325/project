@@ -156,15 +156,15 @@ exports.checkout = async (req, res) => {
       console.log("req.body:", req.body);
   
       // Validate shipping address and payment method
-      if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: 'Shipping street and city are required' });
-      }
+      // if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
+      //   await session.abortTransaction();
+      //   return res.status(400).json({ message: 'Shipping street and city are required' });
+      // }
   
-      if (!paymentMethod) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: 'Payment method is required' });
-      }
+      // if (!paymentMethod) {
+      //   await session.abortTransaction();
+      //   return res.status(400).json({ message: 'Payment method is required' });
+      // }
   
       // Find the cart in the 'carts' collection
       const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
