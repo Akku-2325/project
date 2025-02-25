@@ -149,76 +149,76 @@ exports.clearCart = async (req, res) => {
 exports.checkout = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
+  
     try {
-        const userId = req.user.id;
-        const { shippingAddress, paymentMethod } = req.body;
-        console.log("req.body:", req.body);
-
-        // Validate shipping address and payment method
-        if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Shipping street and city are required' });
-        }
-
-        if (!paymentMethod) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Payment method is required' });
-        }
-
-        // Find the cart in the 'carts' collection
-        const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
-
-        if (!cart) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Cart is empty' });
-        }
-
-        // Create new order in the 'orders' collection
-        const order = new Order({
-            user: userId,
-            items: cart.items,
-            totalAmount: cart.totalAmount,
-            status: 'processing',
-            shippingAddress: {
-              street: shippingAddress.street,
-              city: shippingAddress.city
-            },
-            paymentMethod: paymentMethod,
-        });
-
-        await order.save({ session });
-
-        // Update stock quantity
-        for (const item of cart.items) {
-            const product = await Product.findById(item.product._id).session(session);
-            if (!product) {
-                await session.abortTransaction();
-                return res.status(404).json({ message: `Product not found: ${item.product}` });
-            }
-
-            if (product.stockQuantity < item.quantity) {
-                await session.abortTransaction();
-                return res.status(400).json({ message: `Not enough stock for product: ${product.name}` });
-            }
-
-            product.stockQuantity -= item.quantity;
-            await product.save({ session });
-        }
-
-        if (cart) {
-            // Remove the cart from the 'carts' collection
-            await Cart.deleteOne({ user: userId }).session(session);
-      }
-
-        await session.commitTransaction();
-
-        res.status(200).json({ message: 'Checkout successful', order: order });
-    } catch (error) {
+      const userId = req.user.id;
+      const { shippingAddress, paymentMethod } = req.body;
+      console.log("req.body:", req.body);
+  
+      // Validate shipping address and payment method
+      if (!shippingAddress || !shippingAddress.street || (shippingAddress.street && shippingAddress.street.length < 3) || !shippingAddress.city || (shippingAddress.city && shippingAddress.city.length < 3)) {
         await session.abortTransaction();
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        return res.status(400).json({ message: 'Shipping street and city are required' });
+      }
+  
+      if (!paymentMethod) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: 'Payment method is required' });
+      }
+  
+      // Find the cart in the 'carts' collection
+      const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
+  
+      if (!cart) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: 'Cart is empty' });
+      }
+  
+      // Create new order in the 'orders' collection
+      const order = new Order({
+        user: userId,
+        items: cart.items,
+        totalAmount: cart.totalAmount,
+        status: 'processing',
+        shippingAddress: {
+          street: shippingAddress.street,
+          city: shippingAddress.city
+        },
+        paymentMethod: paymentMethod,
+      });
+  
+      await order.save({ session });
+  
+      // Update stock quantity
+      for (const item of cart.items) {
+        const product = await Product.findById(item.product._id).session(session);
+        if (!product) {
+          await session.abortTransaction();
+          return res.status(404).json({ message: `Product not found: ${item.product._id}` });
+        }
+  
+        if (product.stockQuantity < item.quantity) {
+          await session.abortTransaction();
+          return res.status(400).json({ message: `Not enough stock for product: ${product.name}` });
+        }
+  
+        product.stockQuantity -= item.quantity;
+        await product.save({ session });
+      }
+  
+      if (cart) {
+        // Remove the cart from the 'carts' collection
+        await Cart.deleteOne({ user: userId }).session(session);
+      }
+  
+      await session.commitTransaction();
+  
+      res.status(200).json({ message: 'Checkout successful', order: order });
+    } catch (error) {
+      await session.abortTransaction();
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
     } finally {
-        session.endSession();
+      session.endSession();
     }
-};
+  };
