@@ -89,24 +89,41 @@ exports.updateCartItemQuantity = async (req, res) => {
 // Remove item from cart
 exports.removeItemFromCart = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { productId } = req.params;
-
-        const cart = await Order.findOne({ user: userId, status: 'pending' });
-        if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
+      const userId = req.user.id;
+      const { productId } = req.params;
+  
+      const cart = await Order.findOne({ user: userId, status: 'pending' });
+      if (!cart) {
+        return res.status(404).json({ message: 'Cart not found' });
+      }
+  
+      // Проверяем, есть ли товар в корзине и принадлежит ли он пользователю
+      const itemIndex = cart.items.findIndex(item => item.product == productId);
+      if (itemIndex === -1) {
+        return res.status(404).json({ message: 'Item not found in cart' });
+      }
+  
+      cart.items.splice(itemIndex, 1); // Удаляем товар из корзины
+  
+      // Безопасный пересчет totalAmount
+      cart.totalAmount = cart.items.reduce((total, item) => {
+        // Проверяем, существует ли item.product и его price
+        if (item.product && item.product.price) {
+          return total + item.quantity * Number(item.product.price);
+        } else {
+          console.warn('Product or price is undefined for item:', item);
+          return total; // Если товара или цены нет, просто возвращаем total
         }
-
-        cart.items = cart.items.filter(item => item.product != productId);
-        cart.totalAmount = cart.items.reduce((total, item) => total + item.quantity * item.product.price, 0);
-        await cart.save();
-
-        res.status(200).json({ message: 'Item removed from cart' });
+      }, 0);
+  
+      await cart.save();
+  
+      res.status(200).json({ message: 'Item removed from cart' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
     }
-};
+  };
 
 // Clear cart (cancel order)
 exports.clearCart = async (req, res) => {
