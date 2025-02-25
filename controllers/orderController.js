@@ -173,19 +173,8 @@ exports.checkout = async (req, res) => {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
-        // Create new order in the 'orders' collection
-        const order = new Order({
-            user: userId,
-            items: cart.items,
-            totalAmount: cart.totalAmount,
-            status: 'processing',
-            shippingAddress: shippingAddress,
-            paymentMethod: paymentMethod,
-        });
-
-        await order.save({ session });
-
-        // Update stock quantity
+        // Validate cart items and calculate total amount
+        let totalAmount = 0;
         for (const item of cart.items) {
             const product = await Product.findById(item.product._id).session(session);
             if (!product) {
@@ -200,7 +189,21 @@ exports.checkout = async (req, res) => {
 
             product.stockQuantity -= item.quantity;
             await product.save({ session });
+
+            totalAmount += item.quantity * product.price;
         }
+
+        // Create new order in the 'orders' collection
+        const order = new Order({
+            user: userId,
+            items: cart.items,
+            totalAmount: totalAmount, // Используем вычисленную сумму
+            status: 'processing',
+            shippingAddress: shippingAddress,
+            paymentMethod: paymentMethod,
+        });
+
+        await order.save({ session });
 
         // Remove the cart from the 'carts' collection
         await Cart.deleteOne({ user: userId }).session(session);
