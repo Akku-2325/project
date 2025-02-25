@@ -25,7 +25,7 @@ exports.addItemToCart = async (req, res) => {
         const userId = req.user.id;
         const { productId, quantity, price } = req.body;
 
-        // Find the cart in the 'carts' collection
+        // Find the user's cart
         let cart = await Cart.findOne({ user: userId });
 
         // If cart doesn't exist, create one
@@ -39,15 +39,18 @@ exports.addItemToCart = async (req, res) => {
 
         const existingItemIndex = cart.items.findIndex(item => item.product == productId);
         if (existingItemIndex > -1) {
+            // Update the quantity of the existing item
             cart.items[existingItemIndex].quantity += quantity;
         } else {
+            // Add the new item to the cart
             cart.items.push({
                 product: productId,
                 quantity: quantity,
             });
         }
 
-        cart.totalAmount = cart.items.reduce((total, item) => total + item.quantity * price, 0);
+        // Update the total amount correctly
+        cart.totalAmount = (cart.totalAmount || 0) + (quantity * price);
 
         await cart.save();
         res.status(200).json(cart);
