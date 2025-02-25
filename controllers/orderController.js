@@ -154,10 +154,22 @@ exports.checkout = async (req, res) => {
         const userId = req.user.id;
         const { shippingAddress, paymentMethod } = req.body;
 
+        // Validate shipping address and payment method
+        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: 'Shipping address is required' });
+        }
+
+        if (!paymentMethod) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: 'Payment method is required' });
+        }
+
         // Find the cart in the 'carts' collection
         const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
 
         if (!cart) {
+            await session.abortTransaction();
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
