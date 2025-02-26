@@ -135,10 +135,7 @@ exports.getAllProducts = async (req, res) => {
 
         // Добавляем логику поиска по имени или описанию
         if (searchQuery) {
-            filter.$or = [
-                { name: { $regex: searchQuery, $options: 'i' } }, // Поиск по имени (регистронезависимый)
-                { description: { $regex: searchQuery, $options: 'i' } } // Поиск по описанию (регистронезависимый)
-            ];
+            filter.name = searchQuery; // Простое равенство, без $regex
         }
 
         console.log("filter:", filter); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
