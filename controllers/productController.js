@@ -124,6 +124,8 @@ exports.getAllProducts = async (req, res) => {
         const category = req.query.category;
         const searchQuery = req.query.search; // Получаем поисковый запрос
 
+        console.log("searchQuery:", searchQuery); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
+
         const skip = (page - 1) * limit;
 
         let filter = {};
@@ -138,6 +140,8 @@ exports.getAllProducts = async (req, res) => {
                 { description: { $regex: searchQuery, $options: 'i' } } // Поиск по описанию (регистронезависимый)
             ];
         }
+
+        console.log("filter:", filter); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
 
         let sort = {};
         if (sortBy) {
