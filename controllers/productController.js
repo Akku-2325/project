@@ -113,6 +113,7 @@ exports.deleteProduct = async (req, res) => {
 // Get all products (public)
 // Get all products (public)
 // productController.js
+// productController.js
 exports.getAllProducts = async (req, res) => {
     try {
         console.log("Query parameters:", req.query);
@@ -124,7 +125,7 @@ exports.getAllProducts = async (req, res) => {
         const category = req.query.category;
         const searchQuery = req.query.search; // Получаем поисковый запрос
 
-        console.log("searchQuery:", searchQuery); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
+        console.log("searchQuery:", searchQuery);
 
         const skip = (page - 1) * limit;
 
@@ -133,12 +134,12 @@ exports.getAllProducts = async (req, res) => {
             filter.category = category;
         }
 
-        // Добавляем логику поиска по имени или описанию
+        // УПРОЩЕННЫЙ ФИЛЬТР
         if (searchQuery) {
             filter.name = searchQuery; // Простое равенство, без $regex
         }
 
-        console.log("filter:", filter); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
+        console.log("filter:", filter);
 
         let sort = {};
         if (sortBy) {
