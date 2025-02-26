@@ -149,70 +149,73 @@ exports.clearCart = async (req, res) => {
 exports.checkout = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
+  
     try {
-        const userId = req.user.id;
-        const { shippingAddress, paymentMethod } = req.body;
-
-        // Validate shipping address and payment method
-        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Shipping address is required' });
-        }
-
-        if (!paymentMethod) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Payment method is required' });
-        }
-
-        // Find the cart in the 'carts' collection
-        const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
-
-        if (!cart) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: 'Cart is empty' });
-        }
-
-        // Create new order in the 'orders' collection
-        const order = new Order({
-            user: userId,
-            items: cart.items,
-            totalAmount: cart.totalAmount,
-            status: 'processing',
-            shippingAddress: shippingAddress,
-            paymentMethod: paymentMethod,
-        });
-
-        await order.save({ session });
-
-        // Update stock quantity
-        for (const item of cart.items) {
-            const product = await Product.findById(item.product._id).session(session);
-            if (!product) {
-                await session.abortTransaction();
-                return res.status(404).json({ message: `Product not found: ${item.product}` });
-            }
-
-            if (product.stockQuantity < item.quantity) {
-                await session.abortTransaction();
-                return res.status(400).json({ message: `Not enough stock for product: ${product.name}` });
-            }
-
-            product.stockQuantity -= item.quantity;
-            await product.save({ session });
-        }
-
-        // Remove the cart from the 'carts' collection
-        await Cart.deleteOne({ user: userId }).session(session);
-
-        await session.commitTransaction();
-
-        res.status(200).json({ message: 'Checkout successful', order: order });
-    } catch (error) {
+      const userId = req.user.id;
+      const { shippingAddress, paymentMethod } = req.body;
+  
+      console.log("req.headers:", req.headers); // Log headers
+      console.log("req.body:", req.body); // Log body
+      console.log("userId:", userId); // Log userId
+  
+      const cart = await Cart.findOne({ user: userId }).populate('items.product').session(session);
+      console.log("cart:", cart); // Log cart
+  
+      if (!cart) {
         await session.abortTransaction();
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        console.log("Cart is empty"); // Log message
+        return res.status(400).json({ message: 'Cart is empty' });
+      }
+  
+      const order = new Order({
+        user: userId,
+        items: cart.items,
+        totalAmount: cart.totalAmount,
+        status: 'processing',
+        shippingAddress: {
+          street: shippingAddress?.street || "",
+          city: shippingAddress?.city || ""
+        },
+        paymentMethod: paymentMethod || "",
+      });
+  
+      console.log("order:", order); // Log order
+  
+      await order.save({ session });
+  
+      for (const item of cart.items) {
+        const product = await Product.findById(item.product._id).session(session);
+        console.log("product:", product); // Log product
+        if (!product) {
+          await session.abortTransaction();
+          console.log(`Product not found: ${item.product._id}`); // Log message
+          return res.status(404).json({ message: `Product not found: ${item.product._id}` });
+        }
+  
+        if (product.stockQuantity < item.quantity) {
+          await session.abortTransaction();
+          console.log(`Not enough stock for product: ${product.name}`); // Log message
+          return res.status(400).json({ message: `Not enough stock for product: ${product.name}` });
+        }
+  
+        product.stockQuantity -= item.quantity;
+        await product.save({ session });
+      }
+  
+      if (cart) {
+        await Cart.deleteOne({ user: userId }).session(session);
+      }
+  
+      await session.commitTransaction();
+      console.log("Checkout successful"); // Log message
+      res.status(200).json({ message: 'Checkout successful', order: order });
+  
+    } catch (error) {
+      await session.abortTransaction();
+      console.error("Error during checkout:", error);
+      res.status(500).json({ message: 'Server Error' });
+  
     } finally {
-        session.endSession();
+      session.endSession();
     }
-};
+  };

@@ -36,8 +36,6 @@ const orderSchema = new mongoose.Schema({
         type: {
             street: String,
             city: String,
-            state: String,
-            zip: String,
         },
         required: false, // Или true, в зависимости от требований
     },
