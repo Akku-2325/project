@@ -113,7 +113,6 @@ exports.deleteProduct = async (req, res) => {
 // Get all products (public)
 // Get all products (public)
 // productController.js
-// productController.js
 exports.getAllProducts = async (req, res) => {
     try {
         console.log("Query parameters:", req.query);
@@ -134,9 +133,9 @@ exports.getAllProducts = async (req, res) => {
             filter.category = category;
         }
 
-        // УПРОЩЕННЫЙ ФИЛЬТР
+        // ВОЗВРАЩАЕМ $regex и $options: 'i'
         if (searchQuery) {
-            filter.name = searchQuery; // Простое равенство, без $regex
+            filter.name = { $regex: searchQuery, $options: 'i' };
         }
 
         console.log("filter:", filter);
